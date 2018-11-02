@@ -8,24 +8,18 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strconv"
 )
 
 type Student struct {
 	first string `json: first`
 	last string `json: last`
-	pin int	`json: pin`
+	pin string	`json: pin`
 }
 
-func getPin(password string) int {
+func getPin(password string) string {
 	pattern, _ := regexp.Compile("([0-9]+)")
-
 	pinStr := pattern.FindString(password)
-	pin, err := strconv.Atoi(pinStr)
-		if err != nil {
-			fmt.Printf("There was an error extracting the pin: %s", err)
-		}
-	return pin
+	return pinStr
 }
 //Reads CSV file. Note: each record must terminate with \n.
 func ReadCsv(filePath string) []Student{
@@ -57,12 +51,12 @@ func WriteCsv(location, filename string, students []Student){
 
 	file, err:=  os.Create(filename)
 	checkError(err, "Cannot create file.")
-	defer file.Close()
-
 	writer := csv.NewWriter(file)
+	defer writer.Flush()
 
 	for _, student := range students{
-		studentInfo := []string{student.last, student.first, string(student.pin)+"\n"}
+		studentInfo := []string{student.last, student.first, student.pin}
+		fmt.Println(studentInfo)
 		writer.Write(studentInfo)
 	}
 }
