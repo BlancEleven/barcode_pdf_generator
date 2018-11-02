@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	barcode2 "github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/ean"
+	"image/png"
 	"io"
 	"log"
 	"os"
@@ -43,6 +46,20 @@ func ReadCsv(filePath string) []Student{
 		})
 	}
 	return students
+}
+func MakeBarcodeFile(location, filename string) {
+	err := os.Chdir(location)
+	checkError(err, "Can't change directory for barcode.")
+
+	barcode, err := ean.Encode("0001257")
+	checkError(err, "Can't generate barcode.")
+	scaled, err := barcode2.Scale(barcode, 250, 100)
+	checkError(err, "Error scaling barcode.")
+	file, err := os.Create(filename)
+	checkError(err, "Cannot create barcode file.")
+	defer file.Close()
+
+	png.Encode(file, scaled)
 }
 
 func WriteCsv(location, filename string, students []Student){
