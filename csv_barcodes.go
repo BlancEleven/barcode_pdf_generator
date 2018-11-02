@@ -14,9 +14,9 @@ import (
 )
 
 type Student struct {
-	first string `json:"firstname"`
-	last string `json:"lastname""`
-	pin int `json:"pin"`
+	first string
+	last string
+	pin int
 }
 
 func getPin(password string) int {
