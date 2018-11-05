@@ -47,10 +47,10 @@ func ReadCsv(filePath string) []Student{
 	}
 	return students
 }
-func MakeBarcodeFile(location, filename string) {
+func MakeBarcodeFile(location, filename string, code string)  {
 	err := os.Chdir(location)
 	checkError(err, "Can't change directory for barcode.")
-	barcode, err := code39.Encode("", false, true)
+	barcode, err := code39.Encode(code, false, true)
 	checkError(err, "Can't generate barcode.")
 	scaled, err := barcode2.Scale(barcode, 250, 100)
 	checkError(err, "Error scaling barcode.")
@@ -58,6 +58,14 @@ func MakeBarcodeFile(location, filename string) {
 	checkError(err, "Cannot create barcode file.")
 	defer file.Close()
 	png.Encode(file, scaled)
+
+}
+
+func MakeBarcodes(records []Student){
+	for _, student := range records{
+		filename := student.last + "_" + student.first + ".png"
+		MakeBarcodeFile("/Users/andrewblanchette/Desktop/barcodes", filename, student.pin)
+	}
 }
 
 func WriteCsv(location, filename string, students []Student){
