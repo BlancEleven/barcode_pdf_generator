@@ -50,8 +50,7 @@ func ReadCsv(filePath string) []Student{
 func MakeBarcodeFile(location, filename string) {
 	err := os.Chdir(location)
 	checkError(err, "Can't change directory for barcode.")
-
-	barcode, err := code39.Encode("123", false, false)
+	barcode, err := code39.Encode("", false, true)
 	checkError(err, "Can't generate barcode.")
 	scaled, err := barcode2.Scale(barcode, 250, 100)
 	checkError(err, "Error scaling barcode.")
