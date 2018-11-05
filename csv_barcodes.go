@@ -5,7 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	barcode2 "github.com/boombuler/barcode"
-	"github.com/boombuler/barcode/ean"
+	"github.com/boombuler/barcode/code39"
 	"image/png"
 	"io"
 	"log"
@@ -51,14 +51,13 @@ func MakeBarcodeFile(location, filename string) {
 	err := os.Chdir(location)
 	checkError(err, "Can't change directory for barcode.")
 
-	barcode, err := ean.Encode("0001257")
+	barcode, err := code39.Encode("123", false, false)
 	checkError(err, "Can't generate barcode.")
 	scaled, err := barcode2.Scale(barcode, 250, 100)
 	checkError(err, "Error scaling barcode.")
 	file, err := os.Create(filename)
 	checkError(err, "Cannot create barcode file.")
 	defer file.Close()
-
 	png.Encode(file, scaled)
 }
 
