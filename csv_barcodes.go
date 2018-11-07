@@ -6,11 +6,13 @@ import (
 	"fmt"
 	barcode2 "github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/code39"
-	"image/png"
+	"github.com/jung-kurt/gofpdf"
+	"image/jpeg"
 	"io"
 	"log"
 	"os"
 	"regexp"
+	"strings"
 )
 
 type Student struct {
@@ -41,7 +43,7 @@ func ReadCsv(filePath string) []Student{
 
 		students = append(students, Student{
 			last: line[0],
-			first: line[1],
+			first: strings.TrimSpace(line[1]),
 			pin: getPin(line[2]),
 		})
 	}
@@ -49,7 +51,7 @@ func ReadCsv(filePath string) []Student{
 }
 
 //Makes individual png barcodes
-func MakeBarcodeFile(location, filename string, code string)  {
+func makeBarcodeFile(location, filename string, code string)  {
 	err := os.Chdir(location)
 	checkError(err, "Can't change directory for barcode.")
 
@@ -63,7 +65,7 @@ func MakeBarcodeFile(location, filename string, code string)  {
 	checkError(err, "Cannot create barcode file.")
 
 	defer file.Close()
-	jpg.Encode(file, scaled)
+	jpeg.Encode(file, scaled, nil)
 
 }
 
@@ -71,10 +73,33 @@ func MakeBarcodeFile(location, filename string, code string)  {
 func MakeBarcodes(fileDir string, records []Student) {
 	for _, student := range records {
 		filename := student.last + "_" + student.first + ".jpg"
-		MakeBarcodeFile(fileDir, filename, student.pin)
+		makeBarcodeFile(fileDir, filename, student.pin)
 	}
 }
 
+func GeneratePdf(path, filename string, students []Student){
+	MakeBarcodes(path + "/barcodes", students)
+	pdf := gofpdf.New("L", "in", "Letter", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Ln(1)
+
+	os.Chdir(path + "/barcodes")
+	for _, student := range students{
+		name := student.last + ", " + student.first
+		barcodeName := student.last + "_" + student.first + ".jpg"
+		fmt.Println(name)
+		fmt.Println(barcodeName)
+		pdf.WriteAligned(10.25,2,name, "C")
+		pdf.ImageOptions(barcodeName, 4.5, 0,2,0, true,  gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
+		pdf.Ln(1)
+	}
+	err := pdf.OutputFileAndClose(path + filename)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+}
 
 func checkError(err error, msg string){
 	if err != nil{
