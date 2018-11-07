@@ -6,7 +6,7 @@ import (
 	"fmt"
 	barcode2 "github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/code39"
-	"image/png"
+	"image/jpeg"
 	"io"
 	"log"
 	"os"
@@ -63,7 +63,7 @@ func MakeBarcodeFile(location, filename string, code string)  {
 	checkError(err, "Cannot create barcode file.")
 
 	defer file.Close()
-	jpg.Encode(file, scaled)
+	jpeg.Encode(file, scaled, nil)
 
 }
 
