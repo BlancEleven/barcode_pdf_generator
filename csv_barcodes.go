@@ -51,7 +51,7 @@ func ReadCsv(filePath string) []Student{
 }
 
 //Makes individual png barcodes
-func makeBarcodeFile(location, filename string, code string)  {
+func makeBarcodeFile(location, filename, code string)  {
 	err := os.Chdir(location)
 	checkError(err, "Can't change directory for barcode.")
 
@@ -79,7 +79,11 @@ func MakeBarcodes(fileDir string, records []Student) {
 
 func GeneratePdf(path, filename string, students []Student){
 	MakeBarcodes(path + "/barcodes", students)
-	pdf := gofpdf.New("L", "in", "Letter", "")
+	pdf := gofpdf.New("P", "in", "Letter", "")
+	pdf.SetAutoPageBreak(true, -1)
+	pdf.SetMargins(0.393750, .2, 0.393750)
+	left, top, right, bottom := pdf.GetMargins()
+	fmt.Printf("Left: %f, Top: %f, Right: %f, Bottom: %f", left, top, right, bottom)
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 12)
 	pdf.Ln(1)
@@ -88,8 +92,6 @@ func GeneratePdf(path, filename string, students []Student){
 	for _, student := range students{
 		name := student.last + ", " + student.first
 		barcodeName := student.last + "_" + student.first + ".jpg"
-		fmt.Println(name)
-		fmt.Println(barcodeName)
 		pdf.WriteAligned(10.25,2,name, "C")
 		pdf.ImageOptions(barcodeName, 4.5, 0,2,0, true,  gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
 		pdf.Ln(1)
