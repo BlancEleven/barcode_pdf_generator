@@ -16,9 +16,9 @@ import (
 )
 
 type Student struct {
-	first string `json: first`
-	last string `json: last`
-	pin string	`json: pin`
+	first string
+	last string
+	pin string
 }
 
 func getPin(password string) string {
@@ -27,6 +27,7 @@ func getPin(password string) string {
 	return pinStr
 }
 //Reads CSV file. The file must comply with RFC 4180 "Common Format and MIME Type for CSV Files".
+//This function will return []Student that's needed to run GeneratePdf
 func ReadCsv(filePath string) []Student{
 	var students []Student
 	csvFile, _ := os.Open(filePath)
@@ -49,11 +50,17 @@ func ReadCsv(filePath string) []Student{
 	}
 	return students
 }
+func dirExists(location string) bool{
+	if _, err := os.Stat(location); err !=nil{
+		return false
+	}
+	return false
+}
 
 //Makes individual png barcodes
 func makeBarcodeFile(location, filename, code string)  {
 	err := os.Chdir(location)
-	checkError(err, "Can't change directory for barcode.")
+	checkError(err, "Can't change directory for individual barcodes.")
 
 	barcode, err := code39.Encode(code, false, true)
 	checkError(err, "Can't generate barcode.")
@@ -77,18 +84,22 @@ func MakeBarcodes(fileDir string, records []Student) {
 	}
 }
 
-func GeneratePdf(path, filename string, students []Student){
-	MakeBarcodes(path + "/barcodes", students)
+//Generates a pdf with barcodes and names below them.
+func GeneratePdf(pdfPath, filename string, students []Student){
+	if !dirExists(pdfPath){
+		os.Mkdir(pdfPath, 0700)
+		os.Mkdir(pdfPath + "/barcodes", 0700)
+	}
+
+	MakeBarcodes(pdfPath + "/barcodes", students)
 	pdf := gofpdf.New("P", "in", "Letter", "")
 	pdf.SetAutoPageBreak(true, -1)
 	pdf.SetMargins(0.393750, .2, 0.393750)
-	left, top, right, bottom := pdf.GetMargins()
-	fmt.Printf("Left: %f, Top: %f, Right: %f, Bottom: %f", left, top, right, bottom)
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 12)
 	pdf.Ln(1)
 
-	os.Chdir(path + "/barcodes")
+	os.Chdir(pdfPath + "/barcodes")
 	for _, student := range students{
 		name := student.last + ", " + student.first
 		barcodeName := student.last + "_" + student.first + ".jpg"
@@ -96,7 +107,7 @@ func GeneratePdf(path, filename string, students []Student){
 		pdf.ImageOptions(barcodeName, 4.5, 0,2,0, true,  gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
 		pdf.Ln(1)
 	}
-	err := pdf.OutputFileAndClose(path + filename)
+	err := pdf.OutputFileAndClose("../" + filename)
 
 	if err != nil {
 		log.Fatal(err.Error())
