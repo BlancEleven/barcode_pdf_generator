@@ -6,25 +6,34 @@ import (
 	"fmt"
 	barcode2 "github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/code39"
+	"github.com/jung-kurt/gofpdf"
 	"image/jpeg"
 	"io"
 	"log"
 	"os"
 	"regexp"
+	"strings"
 )
 
 type Student struct {
-	first string `json: first`
-	last string `json: last`
-	pin string	`json: pin`
+	first string
+	last string
+	pinSet bool
+	pin string
 }
 
-func getPin(password string) string {
+func getPin(password string) (string, bool) {
 	pattern, _ := regexp.Compile("([0-9]+)")
 	pinStr := pattern.FindString(password)
-	return pinStr
+	//If pin isn't set.
+	if pinStr == ""{
+
+		return "", false
+	}
+	return pinStr, true
 }
 //Reads CSV file. The file must comply with RFC 4180 "Common Format and MIME Type for CSV Files".
+//This function will return []Student that's needed to run GeneratePdf
 func ReadCsv(filePath string) []Student{
 	var students []Student
 	csvFile, _ := os.Open(filePath)
@@ -38,23 +47,38 @@ func ReadCsv(filePath string) []Student{
 		}else if err != nil{
 			log.Fatal(err)
 		}
+		pin, pinSet := getPin(line[2])
 
 		students = append(students, Student{
 			last: line[0],
-			first: line[1],
-			pin: getPin(line[2]),
+			first: strings.TrimSpace(line[1]),
+			pin: pin,
+			pinSet: pinSet,
 		})
 	}
 	return students
 }
+func dirExists(location string) bool{
+	if _, err := os.Stat(location); err !=nil{
+		return false
+	}
+	return false
+}
 
 //Makes individual png barcodes
-func MakeBarcodeFile(location, filename string, code string)  {
+func makeBarcodeFile(location, filename, code string, pinSet bool)  {
+	var barcode barcode2.Barcode
 	err := os.Chdir(location)
-	checkError(err, "Can't change directory for barcode.")
+	checkError(err, "Can't change directory for individual barcodes.")
 
-	barcode, err := code39.Encode(code, false, true)
-	checkError(err, "Can't generate barcode.")
+	if pinSet{
+		barcode, err = code39.Encode(code, false, true)
+		checkError(err, "Can't generate barcode.")
+
+	}else{
+		barcode, err = code39.Encode("NONE", false, true)
+		checkError(err, "Can't generate barcode.")
+	}
 
 	scaled, err := barcode2.Scale(barcode, 250, 100)
 	checkError(err, "Error scaling barcode.")
@@ -70,11 +94,48 @@ func MakeBarcodeFile(location, filename string, code string)  {
 //Generates Barcodes to the requested directory
 func MakeBarcodes(fileDir string, records []Student) {
 	for _, student := range records {
+
 		filename := student.last + "_" + student.first + ".jpg"
-		MakeBarcodeFile(fileDir, filename, student.pin)
+		makeBarcodeFile(fileDir, filename, student.pin, student.pinSet)
 	}
 }
 
+//Generates a pdf with barcodes and names below them.
+func GeneratePdf(pdfPath, filename string, students []Student){
+	if !dirExists(pdfPath){
+		os.Mkdir(pdfPath, 0700)
+		os.Mkdir(pdfPath + "/barcodes", 0700)
+	}
+
+	MakeBarcodes(pdfPath + "/barcodes", students)
+	pdf := gofpdf.New("P", "in", "Letter", "")
+	pdf.SetAutoPageBreak(true, -1)
+	pdf.SetMargins(0.393750, .2, 0.393750)
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Ln(1)
+
+	os.Chdir(pdfPath + "/barcodes")
+
+	for _, student := range students{
+		var name string
+		if student.pinSet{
+			name = student.last + ", " + student.first
+		}else{
+			name = student.last + ", " + student.first + "- NO PIN SET"
+		}
+
+		barcodeName := student.last + "_" + student.first + ".jpg"
+		pdf.WriteAligned(10.25,2,name, "C")
+		pdf.ImageOptions(barcodeName, 4.5, 0,2,0, true,  gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
+		pdf.Ln(1)
+	}
+	err := pdf.OutputFileAndClose("../" + filename)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+}
 
 func checkError(err error, msg string){
 	if err != nil{
