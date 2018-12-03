@@ -4,39 +4,44 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
-	barcode2 "github.com/boombuler/barcode"
-	"github.com/boombuler/barcode/code39"
-	"github.com/jung-kurt/gofpdf"
 	"image/jpeg"
 	"io"
 	"log"
 	"os"
 	"regexp"
 	"strings"
+
+	barcode2 "github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/code39"
+	"github.com/jung-kurt/gofpdf"
 )
 
 type Student struct {
-	first string
-	last string
+	first  string
+	last   string
 	pinSet bool
-	pin string
+	pin    string
 }
 
 func getPin(password string) (string, bool) {
 	pattern, _ := regexp.Compile("([0-9]+)")
 	pinStr := pattern.FindString(password)
 	//If pin isn't set.
-	if pinStr == ""{
+	if pinStr == "" {
 
 		return "", false
 	}
 	return pinStr, true
 }
+
 //Reads CSV file. The file must comply with RFC 4180 "Common Format and MIME Type for CSV Files".
 //This function will return []Student that's needed to run GeneratePdf
-func ReadCsv(filePath string) []Student{
+func ReadCsv(filePath string) []Student {
 	var students []Student
-	csvFile, _ := os.Open(filePath)
+	csvFile, err := os.Open(filePath)
+	if err != nil {
+		fmt.Printf("Error opening CSV file: \n%s", err)
+	}
 	reader := csv.NewReader(bufio.NewReader(csvFile))
 
 	for {
@@ -44,38 +49,38 @@ func ReadCsv(filePath string) []Student{
 
 		if err == io.EOF {
 			break
-		}else if err != nil{
+		} else if err != nil {
 			log.Fatal(err)
 		}
 		pin, pinSet := getPin(line[2])
 
 		students = append(students, Student{
-			last: line[0],
-			first: strings.TrimSpace(line[1]),
-			pin: pin,
+			last:   line[0],
+			first:  strings.TrimSpace(line[1]),
+			pin:    pin,
 			pinSet: pinSet,
 		})
 	}
 	return students
 }
-func dirExists(location string) bool{
-	if _, err := os.Stat(location); err !=nil{
+func dirExists(location string) bool {
+	if _, err := os.Stat(location); err != nil {
 		return false
 	}
 	return false
 }
 
 //Makes individual png barcodes
-func makeBarcodeFile(location, filename, code string, pinSet bool)  {
+func makeBarcodeFile(location, filename, code string, pinSet bool) {
 	var barcode barcode2.Barcode
 	err := os.Chdir(location)
 	checkError(err, "Can't change directory for individual barcodes.")
 
-	if pinSet{
+	if pinSet {
 		barcode, err = code39.Encode(code, false, true)
 		checkError(err, "Can't generate barcode.")
 
-	}else{
+	} else {
 		barcode, err = code39.Encode("NONE", false, true)
 		checkError(err, "Can't generate barcode.")
 	}
@@ -101,13 +106,13 @@ func MakeBarcodes(fileDir string, records []Student) {
 }
 
 //Generates a pdf with barcodes and names below them.
-func GeneratePdf(pdfPath, filename string, students []Student){
-	if !dirExists(pdfPath){
+func GeneratePdf(pdfPath, filename string, students []Student) {
+	if !dirExists(pdfPath) {
 		os.Mkdir(pdfPath, 0700)
-		os.Mkdir(pdfPath + "/barcodes", 0700)
+		os.Mkdir(pdfPath+"/barcodes", 0700)
 	}
 
-	MakeBarcodes(pdfPath + "/barcodes", students)
+	MakeBarcodes(pdfPath+"/barcodes", students)
 	pdf := gofpdf.New("P", "in", "Letter", "")
 	pdf.SetAutoPageBreak(true, -1)
 	pdf.SetMargins(0.393750, .2, 0.393750)
@@ -117,17 +122,17 @@ func GeneratePdf(pdfPath, filename string, students []Student){
 
 	os.Chdir(pdfPath + "/barcodes")
 
-	for _, student := range students{
+	for _, student := range students {
 		var name string
-		if student.pinSet{
+		if student.pinSet {
 			name = student.last + ", " + student.first
-		}else{
+		} else {
 			name = student.last + ", " + student.first + "- NO PIN SET"
 		}
 
 		barcodeName := student.last + "_" + student.first + ".jpg"
-		pdf.WriteAligned(10.25,2,name, "C")
-		pdf.ImageOptions(barcodeName, 4.5, 0,2,0, true,  gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
+		pdf.WriteAligned(10.25, 2, name, "C")
+		pdf.ImageOptions(barcodeName, 4.5, 0, 2, 0, true, gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
 		pdf.Ln(1)
 	}
 	err := pdf.OutputFileAndClose("../" + filename)
@@ -137,8 +142,8 @@ func GeneratePdf(pdfPath, filename string, students []Student){
 	}
 }
 
-func checkError(err error, msg string){
-	if err != nil{
+func checkError(err error, msg string) {
+	if err != nil {
 		fmt.Println(msg)
 		log.Fatal(err)
 	}
