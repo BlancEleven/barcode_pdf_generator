@@ -125,9 +125,9 @@ func GeneratePdf(pdfPath, filename string, students []Student) {
 	for _, student := range students {
 		var name string
 		if student.pinSet {
-			name = student.last + ", " + student.first
+			name = student.first + " " + student.last
 		} else {
-			name = student.last + ", " + student.first + "- NO PIN SET"
+			name = student.first + " " + student.last + " - NO PIN SET"
 		}
 
 		barcodeName := student.last + "_" + student.first + ".jpg"
