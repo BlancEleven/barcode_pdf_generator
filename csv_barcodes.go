@@ -115,7 +115,7 @@ func GeneratePdf(pdfPath, filename string, students []Student) {
 	MakeBarcodes(pdfPath+"/barcodes", students)
 	pdf := gofpdf.New("P", "in", "Letter", "")
 	pdf.SetAutoPageBreak(true, -1)
-	pdf.SetMargins(0.393750, .2, 0.393750)
+	pdf.SetMargins(-0.75, .2, 0)
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 12)
 	pdf.Ln(1)
@@ -132,7 +132,7 @@ func GeneratePdf(pdfPath, filename string, students []Student) {
 
 		barcodeName := student.last + "_" + student.first + ".jpg"
 		pdf.WriteAligned(10.25, 2, name, "C")
-		pdf.ImageOptions(barcodeName, 4.5, 0, 2, 0, true, gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
+		pdf.ImageOptions(barcodeName, 3.35, 0, 2, 0, true, gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
 		pdf.Ln(1)
 	}
 	err := pdf.OutputFileAndClose("../" + filename)
