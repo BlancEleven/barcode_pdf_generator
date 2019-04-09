@@ -19,7 +19,7 @@ Values should be:
 ### Generate Barcodes from a CSV File
 
 1. Use the `ReadCsv(filepath)` method with the absolute path to the csv file to return an array of `Students` that will be needed for step 2.
-2. Run `GeneratePdf(pdfPath, filename, []Student)` using the full destination path, filename, and the `[]Students` from step 1. 
+2. Run `GeneratePdf(pdfPath, filename, heading, []Student)` using the full destination path, filename, and the `[]Students` from step 1. 
 
 **At this time, no heading can be added to the PDF.**
 
