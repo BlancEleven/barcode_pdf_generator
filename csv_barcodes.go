@@ -106,7 +106,7 @@ func MakeBarcodes(fileDir string, records []Student) {
 }
 
 //Generates a pdf with barcodes and names below them.
-func GeneratePdf(pdfPath, filename string, students []Student) {
+func GeneratePdf(pdfPath, filename, heading string, students []Student) {
 	if !dirExists(pdfPath) {
 		os.Mkdir(pdfPath, 0700)
 		os.Mkdir(pdfPath+"/barcodes", 0700)
@@ -117,6 +117,11 @@ func GeneratePdf(pdfPath, filename string, students []Student) {
 	pdf.SetAutoPageBreak(true, -1)
 	pdf.SetMargins(-0.75, .2, 0)
 	pdf.AddPage()
+	//Heading
+	pdf.SetFont("Arial", "B", 25)
+	pdf.WriteAligned(10.25, 2, heading, "C")
+	pdf.Ln(1)
+	//
 	pdf.SetFont("Arial", "B", 12)
 	pdf.Ln(1)
 
