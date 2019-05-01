@@ -10,6 +10,8 @@ The generator requires a csv file that must be formatted according to [RFC 4180]
 * All records end with a CRLF line break. 
 * There are **no headings** on the fields (I hope the change this in the future).
 
+For best results, I recommend using Google Sheets to make csv files. Excel cv's generate a strange symbol between names. Hopefully I can fix this soon. 
+
 Values should be:
 
 1. Last Name
@@ -19,8 +21,6 @@ Values should be:
 ### Generate Barcodes from a CSV File
 
 1. Use the `ReadCsv(filepath)` method with the absolute path to the csv file to return an array of `Students` that will be needed for step 2.
-2. Run `GeneratePdf(pdfPath, filename, heading, []Student)` using the full destination path, filename, and the `[]Students` from step 1. 
+2. Run `GeneratePdf(pdfPath, filename, heading, []Student)` using the full destination path, filename, and the `[]Students` from step 1.
 
-**At this time, no heading can be added to the PDF.**
-
-
+ 
