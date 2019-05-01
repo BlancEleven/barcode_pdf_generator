@@ -10,7 +10,7 @@ The generator requires a csv file that must be formatted according to [RFC 4180]
 * All records end with a CRLF line break. 
 * There are **no headings** on the fields (I hope the change this in the future).
 
-For best results, I recommend using Google Sheets to make csv files. Excel cv's generate a strange symbol between names. Hopefully I can fix this soon. 
+For best results, I recommend using Google Sheets to make csv files. Excel CSVs generate a strange symbol between names. Hopefully I can fix this soon. 
 
 Values should be:
 
